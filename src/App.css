@@ -1,38 +1,99 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.login-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  height: 100vh;
+  background-color: #f1f1f1;
 }
 
-.App-link {
-  color: #61dafb;
+.welcome-message {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.login-button {
+  background-color: #007bff;
+  color: #fff;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 0.3rem;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
+
+.login-button:hover {
+  background-color: #0069d9;
+}
+
+
+.connected-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f1f1f1;
+}
+
+.connected-header {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.connected-account {
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.connected-button {
+  background-color: #007bff;
+  color: #fff;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 0.3rem;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 2rem;
+}
+
+.connected-button:hover {
+  background-color: #0069d9;
+}
+
+.connected-contract-address {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+
+.candidates-table {
+  border-collapse: collapse;
+  width: 50%;
+  text-align:center;
+}
+
+.candidates-table th, .candidates-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.candidates-table th {
+  background-color: #f2f2f2;
+}
+
+input[type=number] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
