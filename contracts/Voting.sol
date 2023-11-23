@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 
 contract Voting {
     struct Candidate {
@@ -46,9 +46,12 @@ constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
         voters[msg.sender] = true;
     }
 
-    function getAllVotesOfCandiates() public view returns (Candidate[] memory){
-        return candidates;
-    }
+   function getAllVotesOfCandidates() public view returns (Candidate[] memory){
+    return candidates;
+}
+
+
+
 
     function getVotingStatus() public view returns (bool) {
         return (block.timestamp >= votingStart && block.timestamp < votingEnd);

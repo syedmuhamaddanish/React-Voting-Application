@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import {ethers} from 'ethers';
-import {contractAbi, contractAddress} from './Constant/constant';
+import { ethers } from 'ethers';
+import { contractAbi, contractAddress } from './Constant/constant';
 import Login from './Components/Login';
 import Finished from './Components/Finished';
 import Connected from './Components/Connected';
@@ -11,154 +11,189 @@ function App() {
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [votingStatus, setVotingStatus] = useState(true);
-  const [remainingTime, setremainingTime] = useState('');
+  const [remainingTime, setRemainingTime] = useState('');
   const [candidates, setCandidates] = useState([]);
   const [number, setNumber] = useState('');
-  const [CanVote, setCanVote] = useState(true);
+  const [canVote, setCanVote] = useState(true);
 
-
-  useEffect( () => {
+  useEffect(() => {
     getCandidates();
     getRemainingTime();
     getCurrentStatus();
+
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length > 0 && account !== accounts[0]) {
+        setAccount(accounts[0]);
+        checkCanVote();
+      } else {
+        setIsConnected(false);
+        setAccount(null);
+      }
+    };
+
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
 
-    return() => {
+    return () => {
       if (window.ethereum) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
-    }
-  });
-
+    };
+  }, [account]); // Add missing dependencies here
 
   async function vote() {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract (
-        contractAddress, contractAbi, signer
-      );
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract(
+      contractAddress,
+      contractAbi,
+      signer
+    );
 
-      const tx = await contractInstance.vote(number);
-      await tx.wait();
-      canVote();
-  }
+    const tx = await contractInstance.vote(number);
+    await tx.wait();
+    await checkCanVote();
+    }
 
-
-  async function canVote() {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract (
-        contractAddress, contractAbi, signer
-      );
-      const voteStatus = await contractInstance.voters(await signer.getAddress());
-      setCanVote(voteStatus);
-
+  async function checkCanVote() {
+    const signer = provider.getSigner();
+    const contractInstance = new ethers.Contract(
+      contractAddress,
+      contractAbi,
+      signer
+    );
+    const voteStatus = await contractInstance.voters(await signer.getAddress());
+    setCanVote(voteStatus);
   }
 
   async function getCandidates() {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
+    try {
+      const provider = window.ethereum
+        ? new ethers.providers.Web3Provider(window.ethereum)
+        : ethers.getDefaultProvider();
+  
       const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract (
-        contractAddress, contractAbi, signer
+      const contractInstance = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        signer
       );
-      const candidatesList = await contractInstance.getAllVotesOfCandiates();
+  
+      console.log(contractInstance);
+      const candidatesList = await contractInstance.getAllVotesOfCandidates();
+      
+      // Corrected function name
+  
       const formattedCandidates = candidatesList.map((candidate, index) => {
         return {
           index: index,
           name: candidate.name,
-          voteCount: candidate.voteCount.toNumber()
-        }
+          voteCount: candidate.voteCount.toNumber(),
+        };
       });
+  
+      console.log('Candidates:', formattedCandidates);
       setCandidates(formattedCandidates);
+    } catch (error) {
+      console.error('Error fetching candidates:', error.message);
+    }
   }
-
+  
 
   async function getCurrentStatus() {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
+    try {
+      const provider = window.ethereum
+        ? new ethers.providers.Web3Provider(window.ethereum)
+        : ethers.getDefaultProvider();
+
       const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract (
-        contractAddress, contractAbi, signer
+      const contractInstance = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        signer
       );
+
       const status = await contractInstance.getVotingStatus();
-      console.log(status);
+      console.log('Voting Status:', status);
       setVotingStatus(status);
+    } catch (error) {
+      console.error('Error getting current status:', error.message);
+    }
   }
 
   async function getRemainingTime() {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract (
-        contractAddress, contractAbi, signer
-      );
-      const time = await contractInstance.getRemainingTime();
-      setremainingTime(parseInt(time, 16));
-  }
+    try {
+      const provider = window.ethereum
+        ? new ethers.providers.Web3Provider(window.ethereum)
+        : ethers.getDefaultProvider();
 
-  function handleAccountsChanged(accounts) {
-    if (accounts.length > 0 && account !== accounts[0]) {
-      setAccount(accounts[0]);
-      canVote();
-    } else {
-      setIsConnected(false);
-      setAccount(null);
+      const signer = provider.getSigner();
+      const contractInstance = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        signer
+      );
+
+      const time = await contractInstance.getRemainingTime();
+      console.log('Remaining Time:', parseInt(time, 16));
+      setRemainingTime(parseInt(time, 16));
+    } catch (error) {
+      console.error('Error getting remaining time:', error.message);
     }
   }
 
   async function connectToMetamask() {
     if (window.ethereum) {
       try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = window.ethereum
+          ? new ethers.providers.Web3Provider(window.ethereum)
+          : ethers.getDefaultProvider();
+
         setProvider(provider);
-        await provider.send("eth_requestAccounts", []);
+
+        // Ensure the provider is properly initialized
+        await provider.ready;
+
         const signer = provider.getSigner();
         const address = await signer.getAddress();
+
         setAccount(address);
-        console.log("Metamask Connected : " + address);
+        console.log('Metamask Connected:', address);
         setIsConnected(true);
-        canVote();
+        await checkCanVote();
       } catch (err) {
-        console.error(err);
+        console.error('Error connecting to MetaMask:', err);
       }
     } else {
-      console.error("Metamask is not detected in the browser")
+      console.error('MetaMask is not detected in the browser');
     }
   }
 
-  async function handleNumberChange(e) {
+  function handleNumberChange(e) {
     setNumber(e.target.value);
   }
 
   return (
     <div className="App">
-      { votingStatus ? (isConnected ? (<Connected 
-                      account = {account}
-                      candidates = {candidates}
-                      remainingTime = {remainingTime}
-                      number= {number}
-                      handleNumberChange = {handleNumberChange}
-                      voteFunction = {vote}
-                      showButton = {CanVote}/>) 
-                      
-                      : 
-                      
-                      (<Login connectWallet = {connectToMetamask}/>)) : (<Finished />)}
-      
+      {votingStatus ? (
+        isConnected ? (
+          <Connected
+            account={account}
+            candidates={candidates}
+            remainingTime={remainingTime}
+            number={number}
+            handleNumberChange={handleNumberChange}
+            voteFunction={vote}
+            showButton={canVote}
+          />
+        ) : (
+          <Login connectWallet={connectToMetamask} />
+        )
+      ) : (
+        <Finished />
+      )}
     </div>
   );
-
-
-
 }
-
-
-
-
 
 export default App;
