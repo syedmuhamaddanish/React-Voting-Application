@@ -56,7 +56,8 @@ function App() {
     }
 
   async function checkCanVote() {
-    const signer = provider.getSigner();
+    try {
+      const signer = provider.getSigner();
     const contractInstance = new ethers.Contract(
       contractAddress,
       contractAbi,
@@ -64,6 +65,10 @@ function App() {
     );
     const voteStatus = await contractInstance.voters(await signer.getAddress());
     setCanVote(voteStatus);
+    } catch (error) {
+      console.log(error);
+    }
+    
   }
 
   async function getCandidates() {
@@ -79,7 +84,6 @@ function App() {
         signer
       );
   
-      console.log(contractInstance);
       const candidatesList = await contractInstance.getAllVotesOfCandidates();
       
       // Corrected function name
@@ -153,8 +157,10 @@ function App() {
 
         // Ensure the provider is properly initialized
         await provider.ready;
+        console.log(provider);
 
         const signer = provider.getSigner();
+        console.log(signer);
         const address = await signer.getAddress();
 
         setAccount(address);
