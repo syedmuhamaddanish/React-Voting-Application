@@ -9,7 +9,7 @@ require("hardhat-deploy")
 
 // Define the environment variables
 const GOERLI_URL = process.env.GOERLI_URL
-const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || ""
+// const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || ""
 const SEPOLIA_RPC_URL =
     process.env.SEPOLIA_RPC_URL ||
     "https://eth-sepolia.g.alchemy.com/v2/GHw98pcUCgbcC-_dFsPHkZ3p9iul_fV4"

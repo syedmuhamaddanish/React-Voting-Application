@@ -17,143 +17,37 @@ function App() {
   const [canVote, setCanVote] = useState(true);
 
   useEffect(() => {
+    initializeProvider();
     getCandidates();
     getRemainingTime();
     getCurrentStatus();
+  }, []);
 
-    const handleAccountsChanged = (accounts) => {
-      if (accounts.length > 0 && account !== accounts[0]) {
-        setAccount(accounts[0]);
-        checkCanVote();
-      } else {
-        setIsConnected(false);
-        setAccount(null);
-      }
-    };
-
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-    }
-
-    return () => {
+  async function initializeProvider() {
+    try {
       if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      }
-    };
-  }, [account]); // Add missing dependencies here
-
-  async function vote() {
-    const signer = provider.getSigner();
-    const contractInstance = new ethers.Contract(
-      contractAddress,
-      contractAbi,
-      signer
-    );
-
-    const tx = await contractInstance.vote(number);
-    await tx.wait();
-    await checkCanVote();
-    }
-
-  async function checkCanVote() {
-    try {
-      const signer = provider.getSigner();
-    const contractInstance = new ethers.Contract(
-      contractAddress,
-      contractAbi,
-      signer
-    );
-    const voteStatus = await contractInstance.voters(await signer.getAddress());
-    setCanVote(voteStatus);
-    } catch (error) {
-      console.log(error);
-    }
-    
-  }
-
-  async function getCandidates() {
-    try {
-      const provider = window.ethereum
-        ? new ethers.providers.Web3Provider(window.ethereum)
-        : ethers.getDefaultProvider();
-  
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
-  
-      const candidatesList = await contractInstance.getAllVotesOfCandidates();
-      
-      // Corrected function name
-  
-      const formattedCandidates = candidatesList.map((candidate, index) => {
-        return {
-          index: index,
-          name: candidate.name,
-          voteCount: candidate.voteCount.toNumber(),
-        };
-      });
-  
-      console.log('Candidates:', formattedCandidates);
-      setCandidates(formattedCandidates);
-    } catch (error) {
-      console.error('Error fetching candidates:', error.message);
-    }
-  }
-  
-
-  async function getCurrentStatus() {
-    try {
-      const provider = window.ethereum
-        ? new ethers.providers.Web3Provider(window.ethereum)
-        : ethers.getDefaultProvider();
-
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
-
-      const status = await contractInstance.getVotingStatus();
-      console.log('Voting Status:', status);
-      setVotingStatus(status);
-    } catch (error) {
-      console.error('Error getting current status:', error.message);
-    }
-  }
-
-  async function getRemainingTime() {
-    try {
-      const provider = window.ethereum
-        ? new ethers.providers.Web3Provider(window.ethereum)
-        : ethers.getDefaultProvider();
-
-      const signer = provider.getSigner();
-      const contractInstance = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
-
-      const time = await contractInstance.getRemainingTime();
-      console.log('Remaining Time:', parseInt(time, 16));
-      setRemainingTime(parseInt(time, 16));
-    } catch (error) {
-      console.error('Error getting remaining time:', error.message);
-    }
-  }
-
-  async function connectToMetamask() {
-    if (window.ethereum) {
-      try {
-        const provider = window.ethereum
-          ? new ethers.providers.Web3Provider(window.ethereum)
-          : ethers.getDefaultProvider();
-
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
         setProvider(provider);
+
+        // Request account access if needed
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        // Subscribe to account changes
+        window.ethereum.on('accountsChanged', (accounts) => {
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsConnected(true);
+            checkCanVote();
+          } else {
+            setAccount(null);
+            setIsConnected(false);
+          }
+        });
+
+        // Subscribe to chainId changes
+        window.ethereum.on('chainChanged', (chainId) => {
+          // Handle chainId change
+        });
 
         // Ensure the provider is properly initialized
         await provider.ready;
@@ -167,17 +61,123 @@ function App() {
         console.log('Metamask Connected:', address);
         setIsConnected(true);
         await checkCanVote();
-      } catch (err) {
-        console.error('Error connecting to MetaMask:', err);
+      } else {
+        console.error('MetaMask is not detected in the browser');
       }
-    } else {
-      console.error('MetaMask is not detected in the browser');
+    } catch (err) {
+      console.error('Error connecting to MetaMask:', err);
+    }
+  }
+
+  async function vote() {
+    try {
+      if (provider) {
+        const signer = provider.getSigner();
+        const contractInstance = new ethers.Contract(contractAddress, contractAbi, signer);
+
+        const tx = await contractInstance.vote(number);
+        await tx.wait();
+        await checkCanVote();
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+    }
+  }
+
+  async function checkCanVote() {
+    try {
+      if (provider) {
+        const signer = provider.getSigner();
+        const contractInstance = new ethers.Contract(contractAddress, contractAbi, signer);
+        const voterAddress = await signer.getAddress();
+        
+        // Check if the voter is eligible to vote
+        const canVote = await contractInstance.voters(voterAddress);
+        setCanVote(canVote);
+      }
+    } catch (error) {
+      console.error('Error checking vote status:', error);
+  
+      // Check if the error is due to contract revert
+      if (error.code === ethers.utils.Logger.errors.CALL_EXCEPTION) {
+        console.error('Contract call reverted:', error.reason);
+      }
+    }
+  }
+  
+
+  // Implement other contract interaction functions (getCandidates, getRemainingTime, getCurrentStatus) similarly
+  async function getCandidates() {
+    if (provider) {
+      try {
+        const signer = provider.getSigner();
+        const contractInstance = new ethers.Contract(
+          contractAddress,
+          contractAbi,
+          signer
+        );
+
+        const candidatesList = await contractInstance.getAllVotesOfCandidates();
+        const formattedCandidates = candidatesList.map((candidate, index) => {
+          return {
+            index: index,
+            name: candidate.name,
+            voteCount: candidate.voteCount.toNumber(),
+          };
+        });
+
+        console.log('Candidates:', formattedCandidates);
+        setCandidates(formattedCandidates);
+      } catch (error) {
+        console.error('Error fetching candidates:', error.message);
+      }
+    }
+  }
+
+  async function getCurrentStatus() {
+    if (provider) {
+      try {
+        const signer = provider.getSigner();
+        const contractInstance = new ethers.Contract(
+          contractAddress,
+          contractAbi,
+          signer
+        );
+
+        const status = await contractInstance.getVotingStatus();
+        console.log('Voting Status:', status);
+        setVotingStatus(status);
+      } catch (error) {
+        console.error('Error getting current status:', error.message);
+      }
+    }
+  }
+
+  async function getRemainingTime() {
+    if (provider) {
+      try {
+        const signer = provider.getSigner();
+        const contractInstance = new ethers.Contract(
+          contractAddress,
+          contractAbi,
+          signer
+        );
+
+        const time = await contractInstance.getRemainingTime();
+        console.log('Remaining Time:', parseInt(time, 16));
+        setRemainingTime(parseInt(time, 16));
+      } catch (error) {
+        console.error('Error getting remaining time:', error.message);
+      }
     }
   }
 
   function handleNumberChange(e) {
     setNumber(e.target.value);
   }
+
+
+  // Implement handleNumberChange function similarly
 
   return (
     <div className="App">
@@ -193,7 +193,7 @@ function App() {
             showButton={canVote}
           />
         ) : (
-          <Login connectWallet={connectToMetamask} />
+          <Login connectWallet={initializeProvider} />
         )
       ) : (
         <Finished />
