@@ -1,6 +1,7 @@
 import React from "react";
 
 const Connected = (props) => {
+    console.log('Candidates in Connected:', props.candidates);
     return (
         <div className="connected-container">
             <h1 className="connected-header">You are Connected to Metamask</h1>

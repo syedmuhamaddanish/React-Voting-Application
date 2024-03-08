@@ -1,4 +1,4 @@
-const contractAddress = "0x7b5fdCb7a5d983cfB70f2EF55aB8DFe7607A2C00";
+const contractAddress = "0x9E19DE4100ee1732002353396Dc6Be60D133aD49";
 
 const contractAbi = [
     {
@@ -56,7 +56,7 @@ const contractAbi = [
     },
     {
       "inputs": [],
-      "name": "getAllVotesOfCandiates",
+      "name": "getAllVotesOfCandidates",
       "outputs": [
         {
           "components": [
